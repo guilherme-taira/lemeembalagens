@@ -30,7 +30,7 @@ Route::get('/', function () {
  * **/
 
 // ROTA PARA CADASTRAR PRODUTOS 
-// Route::get('/ApiCadastroBling',)
+Route::get('/teste',[produtoController::class,'teste']);
 Route::get('/hub',[HubController::class,'hub'])->name('hub.index');
 Route::get('/getInformationFinance',[GetFormDataAjax::class,'getData'])->name('GetformAjaxFinance');
 Route::get('/getProductsOrder',[GetFormDataAjax::class,'getProducts'])->name('GetProductsOrder');

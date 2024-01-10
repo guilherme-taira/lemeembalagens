@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Bling;
 
 use App\Http\Controllers\Controller;
+use App\Models\Produtos;
 use Illuminate\Http\Request;
 
 interface PutProdutoBling{
@@ -19,7 +20,7 @@ class PutProdutoController implements PutProdutoBling
     private $precoUnit;
     private $estoque;
 
-    public function __construct($sku,$apikey = 'a0e92e1b13cad53953fa6b425bc6cb36bcf51d327ec8ca3c9a0c20d271edb3585cc96277',$precoUnit,$estoque)
+    public function __construct($sku,$apikey ,$precoUnit,$estoque)
     {
         $this->sku = $sku;
         $this->apikey = $apikey;
@@ -63,7 +64,8 @@ class PutProdutoController implements PutProdutoBling
         curl_close($curl_handle);
 
         if($httpCode == "201"){
-            return "Produto Atualizado com Sucesso!";
+            print_r($response);
+            Produtos::where('sku',$this->getSku())->update(['flag' => '']);
         }else{
             return "Error ao Atualizar o produto! Error -> ". $httpCode;
         }

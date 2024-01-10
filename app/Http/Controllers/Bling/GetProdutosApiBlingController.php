@@ -24,42 +24,46 @@ class GetProdutosApiBlingController extends Controller
         return $this->get('produtos/page=1/json/');
     }
 
+   
+    function converterValor($valor) {
+        // Remover a vírgula
+        $valorSemVirgula = str_replace(',', '', $valor);
+
+        // Converter para float
+        $valorConvertido = floatval($valorSemVirgula);
+
+        return $valorConvertido;
+    }
+
     public function get($resource)
     {
 
         // ENDPOINT PARA REQUISICAO
         $endpoint = URL_BASE_API_GET_PRODUTOS_BLING . $resource;
-        echo $endpoint;
+    
         $ch = curl_init();
         //curl_setopt($ch, CURLOPT_URL, $endpoint . '&apikey=' . $this->getApiKey() . '&estoque=S&loja=203664307');
-        curl_setopt($ch, CURLOPT_URL, $endpoint . '&apikey=' . $this->getApiKey() . '&estoque=S');
+        curl_setopt($ch, CURLOPT_URL, $endpoint . '&apikey=' . $this->getApiKey() . '&estoque=S'.'&loja=204761707');
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $response = curl_exec($ch);
         curl_close($ch);
         $produtos = json_decode($response, false);
 
-
-
         foreach ($produtos as $produto) {
             foreach ($produto as $valores) {
-
                 foreach ($valores as $valor) {
                     $data = Produtos::max('id');
-                    $MAXID = $data + 5000;
-
                     $id_Marketplace = isset($valor->produto->produtoLoja) ? $valor->produto->produtoLoja : "";
-
-
                     $verifica = Produtos::where('sku', $valor->produto->codigo)->first();
                     if (!$verifica) {
-                        print_r($valores);
+                        // print_r($valores);
                         $salvar = new Produtos;
                         $salvar->nome = $valor->produto->descricao;
-                        $salvar->sku = empty($valor->produto->codigo) ? $MAXID : $valor->produto->codigo;
+                        $salvar->sku = empty($valor->produto->codigo) ? $data : $valor->produto->codigo;
                         $salvar->saldo = floatval($valor->produto->estoqueAtual);
                         $salvar->QTDBAIXA = $valor->produto->itensPorCaixa;
-                        $salvar->valor = number_format($valor->produto->preco, 2);
+                        $salvar->valor = $this->converterValor(number_format($valor->produto->preco, 2));
                         $salvar->ean = uniqid();
                         $salvar->secundario = uniqid();
                         $salvar->valorPromocional = 0;

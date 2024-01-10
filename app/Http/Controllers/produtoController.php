@@ -2,10 +2,16 @@
 
 namespace App\Http\Controllers;
 set_time_limit(0);
+
+use App\Http\Controllers\Bling\Cadastrar\SobeCadastroController;
 use App\Http\Controllers\Bling\GetProdutosApiBlingController;
+use App\Http\Controllers\Bling\Hub\ProdutoFactory;
 use App\Http\Controllers\Bling\JobGetProductController;
+use App\Http\Controllers\Bling\ProductController;
+use App\Http\Controllers\Bling\PutProdutoController;
 use App\Http\Controllers\Bling\UpdateSecoundProductController;
 use App\Models\Produtos;
+use DateTime;
 use Illuminate\Http\Request;
 
 
@@ -18,9 +24,8 @@ class produtoController extends Controller
      */
     public function index(Request $request)
     {
-        // echo "<pre>";
-        // $produto = new GetProdutosApiBlingController('41dee937f0a15eda696a5c3755c037f7d09fb7527237b88ada88d94df99529b640302f27');
-        // $produto->resource();
+        $produto = new GetProdutosApiBlingController('1aeeb29ae86d4f320c8fbce3a893e23b187121e46d88590d3dcf37f53ff771c23b0ce90a');
+        $produto->resource();
 
         // $getIds = new JobGetProductController();
         // $getIds->MarketplacesJobs();
@@ -105,7 +110,12 @@ class produtoController extends Controller
             $produto->valor = $request->valor;
             $produto->QTDBAIXA = $request->qtdbaixa;
             $produto->sku = $request->sku;
-            $produto->ativo = $request->status;
+
+            if($request->status == 1){
+                $produto->PREPARADO = "X";
+            }
+           $produto->ativo = $request->status;
+
             $produto->dataInicial = $request->datainicial;
             $produto->dataFinal = $request->datafinal;
             $produto->ValorPromocional = $request->valPromocao;
@@ -136,5 +146,32 @@ class produtoController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function teste(){
+        // $produtos = Produtos::where('PREPARADO',"X")->get();
+        // foreach ($produtos as $value) {
+        //     $data = new ProductController($value->sku);
+        //     $dados = new SobeCadastroController($data,'1aeeb29ae86d4f320c8fbce3a893e23b187121e46d88590d3dcf37f53ff771c23b0ce90a');
+        //     $dados->resource();
+        // }
+            
+
+      try {
+        $produtos = Produtos::where('flag',"X")->get();
+        foreach ($produtos as $produto) {
+
+            $DataInicialPromocao = DateTime::createFromFormat('Y-m-d', $produto['dataInicial']);
+            $DataFinalPromocao = DateTime::createFromFormat('Y-m-d', $produto['dataFinal']);
+            $FactoryProduto = new ProdutoFactory();
+            $FactoryProduto->VerificaPromocao($produto->sku, floatval($produto->valorPromocional), floatval($produto->valor), $produto->saldo, $DataInicialPromocao, $DataFinalPromocao, $produto->ativo, $produto->QTDBAIXA, 0);
+            // $statement2 = $this->getPdo2()->query("UPDATE TrayProdutos SET flag_estoque = '', flag_preco = '' WHERE referencia = '{$produto['referencia']}'");
+            // $statement2->execute();
+            
+          
+        } 
+      } catch (\Exception $e) {
+        echo $e->getMessage();
+      } 
     }
 }

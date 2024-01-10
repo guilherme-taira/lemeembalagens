@@ -60,11 +60,14 @@
               </div>
 
               <div class="col-md-2">
-                <label for="validationServer01" class="form-label">Ativo</label>
+                <label for="validationServer01" class="form-label">SITE</label>
                 <select class="form-select" name="status" required aria-label="select example">
-                  <option value="">Selecione..</option>
-                  <option value="Ativo">Ativo</option>
-                  <option value="Inativo">Inativo</option>
+                  <option value="{{isset($produto->ativo)? "1": "0"}}">{{$produto->ativo != 0 ? "SIM": "NÃO"}}</option>
+                  @if ($produto->ativo > 0)
+                    <option value="0">NÃO</option>
+                  @else
+                  <option value="1">SIM</option>
+                  @endif
                 </select>
                 <div class="invalid-feedback">Selecione uma das opções!</div>
               </div>

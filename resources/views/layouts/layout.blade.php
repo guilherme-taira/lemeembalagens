@@ -41,7 +41,7 @@
                     <li class="nav-item"><a class="nav-link"
                             href="{{ route('pedidos.index') }}">Pedidos</a>
                     </li>
-                    <li class="nav-item"><a class="nav-link" href="{{route('financeiro.index')}}">Finaceiro</a></li>
+                    {{-- <li class="nav-item"><a class="nav-link" href="{{route('financeiro.index')}}">Finaceiro</a></li> --}}
                     <li class="nav-item"><a class="nav-link" href="{{ route('hub.index') }}">Hub</a></li>
                     <li class="nav-item"><a class="nav-link" href="#faq">Integração</a></li>
                     </li>

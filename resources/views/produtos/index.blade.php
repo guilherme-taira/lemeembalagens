@@ -50,10 +50,10 @@
                             <td>R$: {{ $produtos->valor }}</td>
                             <td>{{ $produtos->saldo }}</td>
                             <td>{{ $produtos->QTDBAIXA }}</td>
-                            @if ($produtos->ativo != 'Ativo')
-                                <td><span class="badge bg-danger float-end">INATIVO</span></td>
+                            @if ($produtos->ativo != '1')
+                                <td><span class="badge bg-danger">INATIVO</span></td>
                             @else
-                                <td><span class="badge bg-success float-end">ATIVO</span></td>
+                                <td><span class="badge bg-success">ATIVO</span></td>
                             @endif
                             <td><button class="btn btn-warning" id="enviado">{{ $produtos->id }}</button></td>
                         </tr>
