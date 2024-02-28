@@ -82,7 +82,7 @@ class GetProdutosApiBlingController extends Controller
                     }else{
                         $id = (string) $loja->name;
                         if($id_Marketplace != $loja->idmultiloja){
-                            table_produtos_locais::where('sku',$valor->produto->codigo)->update([$id => $id_Marketplace]);
+                            table_produtos_locais::where('sku',$valor->produto->codigo)->update([$id => $id_Marketplace,'peso' => $valor->produto->pesoLiq, 'altura' => $valor->produto->alturaProduto, 'largura' => $valor->produto->larguraProduto,'comprimento' => $valor->produto->profundidadeProduto]);
                         }
                     }
                 }
