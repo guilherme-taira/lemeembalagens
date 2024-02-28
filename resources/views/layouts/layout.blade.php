@@ -36,14 +36,23 @@
                     <li class="nav-item"><a class="nav-link active" aria-current="page"
                             href="{{ route('index') }}">Home</a>
                     </li>
-                    <li class="nav-item"><a class="nav-link"
-                            href="{{ route('produtos.index') }}">Produtos</a></li>
-                    <li class="nav-item"><a class="nav-link"
-                            href="{{ route('pedidos.index') }}">Pedidos</a>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('produtos.index') }}">Produtos Bling</a>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('produtoslogista') }}">Produtos Logista</a>
                     </li>
                     {{-- <li class="nav-item"><a class="nav-link" href="{{route('financeiro.index')}}">Finaceiro</a></li> --}}
                     <li class="nav-item"><a class="nav-link" href="{{ route('hub.index') }}">Hub</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#faq">Integração</a></li>
+                    <li>
+                        <div class="dropdown">
+                            <a class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                Integração
+                             </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="nav-link" href="{{ route('multiloja.index') }}">Hub</a></li>
+                                <li><a class="nav-link" href="{{ route('importData') }}">Importar Planilha</a></li>
+                            </ul>
+                        </div>
                     </li>
                 </ul>
             </div>

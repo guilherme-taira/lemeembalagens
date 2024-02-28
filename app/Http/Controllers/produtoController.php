@@ -11,12 +11,31 @@ use App\Http\Controllers\Bling\ProductController;
 use App\Http\Controllers\Bling\PutProdutoController;
 use App\Http\Controllers\Bling\UpdateSecoundProductController;
 use App\Models\Produtos;
+use App\Models\table_produtos_locais;
 use DateTime;
 use Illuminate\Http\Request;
 
 
 class produtoController extends Controller
 {
+
+    public function getProdutosLogista(Request $request){
+        
+        $products = table_produtos_locais::paginate(10);
+
+        if(!empty($request->sku)){
+
+            $products = table_produtos_locais::where('sku',$request->sku)->paginate(10);
+
+            return view('produtos.index',[
+                "products" => $products
+            ]);
+        }
+
+        return view('produtos.index',[
+            'products' => $products
+        ]);
+    }
     /**
      * Display a listing of the resource.
      *
@@ -24,9 +43,7 @@ class produtoController extends Controller
      */
     public function index(Request $request)
     {
-        $produto = new GetProdutosApiBlingController('1aeeb29ae86d4f320c8fbce3a893e23b187121e46d88590d3dcf37f53ff771c23b0ce90a');
-        $produto->resource();
-
+ 
         // $getIds = new JobGetProductController();
         // $getIds->MarketplacesJobs();
 
@@ -73,9 +90,9 @@ class produtoController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show(Produtos $produto)
+    public function show(table_produtos_locais $produto)
     {
-        $produto = Produtos::where('id',$produto->id)->first();
+        $produto = table_produtos_locais::where('id',$produto->id)->first();
 
         return view('produtos.edit',[
             "produto" => $produto
@@ -100,7 +117,7 @@ class produtoController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Produtos $produto)
+    public function update(Request $request, table_produtos_locais $produto)
     {
           try {
             $produto->nome = $request->nome;
@@ -123,12 +140,12 @@ class produtoController extends Controller
 
             if($success == 1){
                 // atualiza o saldo e valor do secundario
-                $UpdateSecundario = new UpdateSecoundProductController();
-                $UpdateSecundario->UpdateValoresSecundario($request->sku,floatval($request->stock),$request->qtdbaixa,$request->valor);
+                // $UpdateSecundario = new UpdateSecoundProductController();
+                // $UpdateSecundario->UpdateValoresSecundario($request->sku,floatval($request->stock),$request->qtdbaixa,$request->valor);
 
                 // COLOCA NA FILA
-                \App\Jobs\atualizaProduto::dispatch($request->sku,$request->valor,floatval($request->stock))->delay(now()->addSeconds('5'));
-                return redirect()->route('produtos.index')->with('msg',"Produto {$request->nome} Editado Com Sucesso!");
+                // \App\Jobs\atualizaProduto::dispatch($request->sku,$request->valor,floatval($request->stock))->delay(now()->addSeconds('5'));
+                return redirect()->route('produtoslogista')->with('msg',"Produto {$request->nome} Editado Com Sucesso!");
             }else{
                 echo "erro ao editar o cadastro";
             }
@@ -149,6 +166,11 @@ class produtoController extends Controller
     }
 
     public function teste(){
+     
+        echo "<h1> teste </h1>";
+        $produto = new GetProdutosApiBlingController('1aeeb29ae86d4f320c8fbce3a893e23b187121e46d88590d3dcf37f53ff771c23b0ce90a');
+        print_r($produto->resource());
+
         // $produtos = Produtos::where('PREPARADO',"X")->get();
         // foreach ($produtos as $value) {
         //     $data = new ProductController($value->sku);

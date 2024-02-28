@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Bling\Cadastrar\SobeCadastroController;
+use App\Http\Controllers\Bling\GetProdutosApiBlingController;
 use App\Http\Controllers\Bling\Hub\ProdutoFactory;
 use App\Http\Controllers\Bling\ProductController;
 use App\Http\Controllers\Bling\PutProdutoController;
 use App\Models\Produtos;
+use App\Models\table_produtos_locais;
 use DateTime;
 use Illuminate\Http\Request;
 
@@ -14,13 +16,15 @@ class HubController extends Controller
 {
     public function Hub(){
 
+      $produto = new GetProdutosApiBlingController('1aeeb29ae86d4f320c8fbce3a893e23b187121e46d88590d3dcf37f53ff771c23b0ce90a');
+      $produto->resource();
 
-         $produtos = Produtos::where('PREPARADO',"X")->get();
-        foreach ($produtos as $value) {
+         $produtos = table_produtos_locais::where('PREPARADO',"X")->get();
+         foreach ($produtos as $value) {
             $data = new ProductController($value->sku);
             $dados = new SobeCadastroController($data,'1aeeb29ae86d4f320c8fbce3a893e23b187121e46d88590d3dcf37f53ff771c23b0ce90a');
             $dados->resource();
-        }
+         }
             
 
       try {

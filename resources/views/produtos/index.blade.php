@@ -21,7 +21,7 @@
 
 
                 <!--- BUSCA PRODUTO NO BANCO --->
-                <form action="{{ route('produtos.index') }}" method="GET" class="mt-3">
+                <form action="{{ route('produtoslogista') }}" method="GET" class="mt-3">
                     <div class="form-group col">
                         <label for="inputEmail4">Código Interno / SKU</label>
                         <input type="number" name="sku" class="form-control" id="inputEmail4" placeholder="Digite o SKU">

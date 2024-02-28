@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Bling;
 
 use App\Http\Controllers\Controller;
 use App\Models\Produtos;
+use App\Models\table_produtos_locais;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -18,9 +19,9 @@ class ProductController extends Controller
 
     public function __construct($codigo)
     {
-        $produto = Produtos::where('sku',$codigo)->first();
+        $produto = table_produtos_locais::where('sku',$codigo)->first();
         $this->codigo = $produto->sku;
-        $this->descricao = "descricao produto";
+        $this->descricao = $produto->nome;
         $this->tipo = "P";
         $this->vlr_unit = $produto->valor;
         $this->peso_bruto = 0;

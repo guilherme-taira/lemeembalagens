@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Bling\Cadastrar;
 
 use App\Http\Controllers\Controller;
 use App\Models\Produtos;
+use App\Models\table_produtos_locais;
 use Illuminate\Http\Request;
 
 class SobeCadastroController extends AbstractCadastroController
@@ -46,11 +47,10 @@ class SobeCadastroController extends AbstractCadastroController
           $response = curl_exec($curl_handle);
           $httpCode = curl_getinfo($curl_handle, CURLINFO_HTTP_CODE);
           curl_close($curl_handle);
-          echo "<pre>";
         
           if($httpCode == "201"){
             foreach (json_decode($response)->retorno->produtos as $key => $value) {
-                Produtos::where('sku',$this->getProduto()->getCodigo())->update(['id_bling' => $value->produto->id, 'INTEGRADO' => 'X','PREPARADO' => '']);
+                table_produtos_locais::where('sku',$this->getProduto()->getCodigo())->update(['id_bling' => $value->produto->id, 'INTEGRADO' => 'X','PREPARADO' => '']);
             }
           }else{
               return "Error ao Atualizar o produto! Error -> ". $httpCode;
