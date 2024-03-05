@@ -9,7 +9,8 @@ use App\Models\table_produtos_locais;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-interface PutProdutoBling{
+interface PutProdutoBling
+{
     public function resource();
     public function get($resource);
 }
@@ -25,7 +26,7 @@ class PutProdutoController implements PutProdutoBling
     private $precoUnit;
     private $estoque;
 
-    public function __construct($sku,$apikey ,$precoUnit,$estoque)
+    public function __construct($sku, $apikey, $precoUnit, $estoque)
     {
         $this->sku = $sku;
         $this->apikey = $apikey;
@@ -33,17 +34,19 @@ class PutProdutoController implements PutProdutoBling
         $this->estoque = $estoque;
     }
 
-    public function resource(){
+    public function resource()
+    {
         return $this->get("Api/v2/produto/{$this->getSku()}/json/");
     }
 
-    public function get($resource){
+    public function get($resource)
+    {
 
         // ENDPOINT PARA REQUISIÇÂO
-        $endpoint = self::URL_BASE_PUT_PRODUTO_BLING.$resource;
-     
+        $endpoint = self::URL_BASE_PUT_PRODUTO_BLING . $resource;
+
         // XML COM DADOS PARA ATUALIZAR 
-      
+
         $xml = "
         <?xml version='1.0' encoding='UTF-8'?>
         <produto>
@@ -52,56 +55,6 @@ class PutProdutoController implements PutProdutoBling
         </produto>
         ";
 
-        $posts = array(
-        "apikey" => $this->getApikey(),
-        "xml" => rawurlencode($xml),
-        );
-
-
-        $curl_handle = curl_init();
-        curl_setopt($curl_handle, CURLOPT_URL, $endpoint);
-        curl_setopt($curl_handle, CURLOPT_POST, 1);
-        curl_setopt($curl_handle, CURLOPT_POSTFIELDS, $posts);
-        curl_setopt($curl_handle, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, TRUE);
-        $response = curl_exec($curl_handle);
-        $httpCode = curl_getinfo($curl_handle, CURLINFO_HTTP_CODE);
-        curl_close($curl_handle);
-
-        Log::alert(json_encode($response));
-
-        if($httpCode == "201"){
-        $this->updateMultiLoja($endpoint);
-        table_produtos_locais::where('sku',$this->getSku())->update(['flag' => '']);
-        }else{
-        return "Error ao Atualizar o produto! Error -> ". $httpCode;
-        }
-    }
-
-public function updateMultiLoja($endpoint){
-
-
-$lojas = multiloja::get();
-
-
-foreach ($lojas as $key => $value) {
-    
-    try {
-        $endpoint = "https://bling.com.br/Api/v2/produtoLoja/{$value->idmultiloja}/{$this->getSku()}/json";
-
-
-            // PRECO PROMO  <precoPromocional>20</precoPromocional>
-            $xml = "<produtosLoja>
-            <produtoLoja>
-            <idLojaVirtual>{$value->idmultiloja}</idLojaVirtual>
-            <preco>
-                <preco>{$this->getLocal($value->name)}</preco>
-            </preco>
-            </produtoLoja>
-            </produtosLoja>";
-
-            echo "<p class='alert alert-success'>ID {$value->idmultiloja} foi atualizado com o valor  {$this->getLocal($value->name)}</p>";
-            echo "<hr>";
         $posts = array(
             "apikey" => $this->getApikey(),
             "xml" => rawurlencode($xml),
@@ -117,43 +70,107 @@ foreach ($lojas as $key => $value) {
         $response = curl_exec($curl_handle);
         $httpCode = curl_getinfo($curl_handle, CURLINFO_HTTP_CODE);
         curl_close($curl_handle);
-        $res = json_decode($response);
-        // print_r($res);
-    } catch (\Exception $th) {
-       echo $th->getMessage();
-    }
-         
+
+        Log::alert(json_encode($response));
+
+        if ($httpCode == "201") {
+            $this->updateMultiLoja($endpoint);
+            table_produtos_locais::where('sku', $this->getSku())->update(['flag' => '']);
+        } else {
+            return "Error ao Atualizar o produto! Error -> " . $httpCode;
         }
+    }
+    public function updateMultiLoja($endpoint)
+    {
+
+
+        $lojas = multiloja::get();
+        // VERIFICA LOJA
+        $ifExist = table_produtos_locais::where('sku', $this->getSku())->first();
+
+        foreach ($lojas as $key => $value) {
+
+            try {
+                $endpoint = "https://bling.com.br/Api/v2/produtoLoja/{$value->idmultiloja}/{$this->getSku()}/json";
+
         
+                if ($ifExist[$value->name]) {
+                    echo $value->name . "<hr>";
+                    // PRECO PROMO  <precoPromocional>20</precoPromocional>
+                    $xml = "<produtosLoja>
+                        <produtoLoja>
+                        <idLojaVirtual>{$ifExist[$value->name]}</idLojaVirtual>
+                        <preco>
+                            <preco>{$this->getLocal($value->name)}</preco>
+                        </preco>
+                        </produtoLoja>
+                        </produtosLoja>";
+
+                    echo "<p class='alert alert-success'>ID {$ifExist[$value->name]} loja {$value->name} foi atualizado com o valor  {$this->getLocal($value->name)}</p>";
+                    echo "<hr>";
+                    $posts = array(
+                        "apikey" => $this->getApikey(),
+                        "xml" => rawurlencode($xml),
+                    );
+
+
+                    $curl_handle = curl_init();
+                    curl_setopt($curl_handle, CURLOPT_URL, $endpoint);
+                    curl_setopt($curl_handle, CURLOPT_POST, 1);
+                    curl_setopt($curl_handle, CURLOPT_POSTFIELDS, $posts);
+                    curl_setopt($curl_handle, CURLOPT_SSL_VERIFYPEER, false);
+                    curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, TRUE);
+                    $response = curl_exec($curl_handle);
+                    $httpCode = curl_getinfo($curl_handle, CURLINFO_HTTP_CODE);
+                    curl_close($curl_handle);
+                    $res = json_decode($response);
+                    print_r($res);
+                }
+              
+            } catch (\Exception $th) {
+                echo $th->getMessage();
+            }
+        }
     }
 
-    public function getLocal($value){
+    public function getLocal($value)
+    {
         switch ($value) {
             case 'id_mercadoLivre':
-              return $this->getMercadoLivreValue();
-                case 'id_shopee':
-                    return $this->getShopeeValue();
-                    case 'tray':
-                        return$this->getSiteValue() ;
-               
+                return $this->getMercadoLivreValue();
+            case 'id_shopee':
+                return $this->getShopeeValue();
+            case 'tray':
+                return $this->getSiteValue();
         }
     }
 
-    public function getSiteValue(){
+    public function getSiteValue()
+    {
         return $this->getPrecoUnit();
     }
 
-    public function getShopeeValue(){
-        $preco = ($this->getPrecoUnit() + ( $this->getPrecoUnit() * 0.25)) + 3 ;
+    public function getShopeeValue()
+    {
+        $preco = ($this->getPrecoUnit() + 3) / 0.80;
         return $preco;
     }
 
-    public function getMercadoLivreValue(){
-        $valor_produto = ($this->getPrecoUnit() + ( $this->getPrecoUnit() * 0.19)) + $this->Frete(floatval($this->CalculoCubico($this->getSku())));
-        return $valor_produto;
+    public function getMercadoLivreValue()
+    {
+
+        $valor_produto = ($this->getPrecoUnit() + ($this->getPrecoUnit() * 0.19)) + $this->Frete(floatval($this->CalculoCubico($this->getSku())));
+
+        if ($valor_produto < 79) {
+            $valor_produto = ($this->getPrecoUnit() + 6) + ($this->getPrecoUnit() * 0.19);
+            return $valor_produto;
+        } else {
+            return $valor_produto;
+        }
     }
 
-    function converterValor($valor) {
+    function converterValor($valor)
+    {
         // Remover a vírgula
         $valorSemVirgula = str_replace(',', '', $valor);
 
@@ -165,7 +182,7 @@ foreach ($lojas as $key => $value) {
     public function Frete(string $peso)
     {
         if ($peso <= 300) {
-            return number_format(18.95,2);
+            return number_format(18.95, 2);
         } else if ($peso >= 300 && $peso <= 500) {
             return 19.45;
         } else if ($peso >= 500 && $peso <= 1000) {
@@ -178,7 +195,7 @@ foreach ($lojas as $key => $value) {
             return 23.45;
         } else if ($peso >= 4000 && $peso <= 5000) {
             return 23.95;
-        }else if ($peso >= 5000 && $peso <= 9000) {
+        } else if ($peso >= 5000 && $peso <= 9000) {
             return 40.95;
         } else if ($peso >= 9000 && $peso <= 13000) {
             return 63.95;
@@ -215,12 +232,11 @@ foreach ($lojas as $key => $value) {
             return 40.65;
         } else if ($peso >= 2000 && $peso <= 3000) {
             return 51;
-        }else if ($peso >= 3000 && $peso <= 4000) {
+        } else if ($peso >= 3000 && $peso <= 4000) {
             return 51.50;
         } else if ($peso >= 4000 && $peso <= 5000) {
             return 52;
-        }
-        else if ($peso >= 5000 && $peso <= 9000) {
+        } else if ($peso >= 5000 && $peso <= 9000) {
             return 63.70;
         } else if ($peso >= 9000 && $peso <= 13000) {
             return 92;
@@ -247,7 +263,7 @@ foreach ($lojas as $key => $value) {
 
     public function CalculoCubico($id)
     {
-   
+
         // CALCULO DO PESO CUBICO
         $cubico = Produtos::where('sku', $id)->first();
         $altura = isset($cubico->altura) ? $cubico->altura : 0;
@@ -259,17 +275,17 @@ foreach ($lojas as $key => $value) {
         // VERIFICA PESO MAIOR
         if ($total <= 2000) {
             return $cubico->Peso;
-        }else if($total > 2000 && $total > $cubico->peso){
+        } else if ($total > 2000 && $total > $cubico->peso) {
             return $total;
-        }else if($total > 2000 && $total < $cubico->peso){
+        } else if ($total > 2000 && $total < $cubico->peso) {
             return $cubico->peso;
         }
     }
-   
+
 
     /**
      * Get the value of apikey
-     */ 
+     */
     public function getApikey()
     {
         return $this->apikey;
@@ -277,7 +293,7 @@ foreach ($lojas as $key => $value) {
 
     /**
      * Get the value of sku
-     */ 
+     */
     public function getSku()
     {
         return $this->sku;
@@ -285,7 +301,7 @@ foreach ($lojas as $key => $value) {
 
     /**
      * Get the value of precoUnit
-     */ 
+     */
     public function getPrecoUnit()
     {
         return $this->precoUnit;
@@ -293,7 +309,7 @@ foreach ($lojas as $key => $value) {
 
     /**
      * Get the value of estoque
-     */ 
+     */
     public function getEstoque()
     {
         return $this->estoque;
