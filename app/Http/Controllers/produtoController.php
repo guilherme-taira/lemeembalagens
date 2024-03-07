@@ -9,9 +9,11 @@ use App\Http\Controllers\Bling\Hub\ProdutoFactory;
 use App\Http\Controllers\Bling\JobGetProductController;
 use App\Http\Controllers\Bling\ProductController;
 use App\Http\Controllers\Bling\PutProdutoController;
+use App\Http\Controllers\Bling\Token\TokenControllerImplement;
 use App\Http\Controllers\Bling\UpdateSecoundProductController;
 use App\Models\Produtos;
 use App\Models\table_produtos_locais;
+use App\Models\token;
 use DateTime;
 use Illuminate\Http\Request;
 
@@ -168,8 +170,10 @@ class produtoController extends Controller
     public function teste(){
      
         echo "<h1> teste </h1>";
-        $produto = new GetProdutosApiBlingController('1aeeb29ae86d4f320c8fbce3a893e23b187121e46d88590d3dcf37f53ff771c23b0ce90a');
-        print_r($produto->resource());
+        
+        $token = token::first();
+        $refreshToken = new TokenControllerImplement($_ENV['CLIENT_ID'],$_ENV['CLIENT_SECRET'],$token->refresh_token,$token);
+        $refreshToken->resource();
 
         // $produtos = Produtos::where('PREPARADO',"X")->get();
         // foreach ($produtos as $value) {

@@ -19,27 +19,26 @@ class HubController extends Controller
       $produto = new GetProdutosApiBlingController('1aeeb29ae86d4f320c8fbce3a893e23b187121e46d88590d3dcf37f53ff771c23b0ce90a');
       $produto->resource();
 
-         $produtos = table_produtos_locais::where('PREPARADO',"X")->get();
-         foreach ($produtos as $value) {
-            $data = new ProductController($value->sku);
-            $dados = new SobeCadastroController($data,'1aeeb29ae86d4f320c8fbce3a893e23b187121e46d88590d3dcf37f53ff771c23b0ce90a');
-            $dados->resource();
-         }
+      $produtos = table_produtos_locais::where('PREPARADO',"X")->get();
+      foreach ($produtos as $value) {
+        $data = new ProductController($value->sku);
+        $dados = new SobeCadastroController($data,'1aeeb29ae86d4f320c8fbce3a893e23b187121e46d88590d3dcf37f53ff771c23b0ce90a');
+        $dados->resource();
+      }
             
+      // try {
+      //   $produtos = Produtos::where('flag',"X")->get();
+      //   foreach ($produtos as $produto) {
 
-      try {
-        $produtos = Produtos::where('flag',"X")->get();
-        foreach ($produtos as $produto) {
-
-            $DataInicialPromocao = DateTime::createFromFormat('Y-m-d', $produto['dataInicial']);
-            $DataFinalPromocao = DateTime::createFromFormat('Y-m-d', $produto['dataFinal']);
-            $FactoryProduto = new ProdutoFactory();
-            $FactoryProduto->VerificaPromocao($produto->sku, floatval($produto->valorPromocional), floatval($produto->valor), $produto->saldo, $DataInicialPromocao, $DataFinalPromocao, $produto->ativo, $produto->QTDBAIXA, 0);
+      //       $DataInicialPromocao = DateTime::createFromFormat('Y-m-d', $produto['dataInicial']);
+      //       $DataFinalPromocao = DateTime::createFromFormat('Y-m-d', $produto['dataFinal']);
+      //       $FactoryProduto = new ProdutoFactory();
+      //       $FactoryProduto->VerificaPromocao($produto->sku, floatval($produto->valorPromocional), floatval($produto->valor), $produto->saldo, $DataInicialPromocao, $DataFinalPromocao, $produto->ativo, $produto->QTDBAIXA, 0);
         
-        } 
-      } catch (\Exception $e) {
-        echo $e->getMessage();
-      } 
+      //   } 
+      // } catch (\Exception $e) {
+      //   echo $e->getMessage();
+      // } 
       
         return view('hub.index');
     }

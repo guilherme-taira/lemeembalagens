@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Bling\Cadastrar;
 use App\Http\Controllers\Controller;
 use App\Models\Produtos;
 use App\Models\table_produtos_locais;
+use App\Models\token;
 use Illuminate\Http\Request;
 
 class SobeCadastroController extends AbstractCadastroController
@@ -19,39 +20,57 @@ class SobeCadastroController extends AbstractCadastroController
      
           // XML COM DADOS PARA ATUALIZAR 
 
-          $xml = "
-          <?xml version='1.0' encoding='UTF-8'?>
-          <produto>
-              <codigo>{$this->getProduto()->getCodigo()}</codigo>
-              <descricao>{$this->getProduto()->getDescricao()}</descricao>
-              <tipo>{$this->getProduto()->getTipo()}</tipo>
-              <peso_bruto>{$this->getProduto()->getPesoBruto()}</peso_bruto>
-              <peso_liq>{$this->getProduto()->getPesoLiq()}</peso_liq>
-              <estoque>{$this->getProduto()->getEstoque()}</estoque>
-              <vlr_unit>{$this->getProduto()->getVlrUnit()}</vlr_unit>
-          </produto>
-          ";
-  
-          $posts = array(
-              "apikey" => $this->getApikey(),
-              "xml" => rawurlencode($xml),
-          );
-  
+          $prod = [
+            "unidade" => "UN",
+            'formato' => "S",
+            'codigo' => $this->getProduto()->getCodigo(),
+            'nome' => $this->getProduto()->getDescricao(),
+            'tipo' => $this->getProduto()->getTipo(),
+            'pesoLiquido' => $this->getProduto()->getPesoLiq(),
+            'pesoBruto' => $this->getProduto()->getPesoLiq(),
+            'preco' => $this->getProduto()->getVlrUnit(),
+            'dimensoes' => [ 
+                "largura"=> 1,
+                "altura"=> 1,
+                "profundidade"=> 1,
+                "unidadeMedida"=> 1
+            ],
+            "estoque"=> [
+                "minimo"=> 1,
+                "maximo"=> $this->getProduto()->getEstoque(),
+                "localizacao" => "A"
+            ],
+            "estrutura"=> [
+                "tipoEstoque"=> "F",
+                "lancamentoEstoque"=> "A",
+                "componentes"=> [
+                  [
+                    "produto"=> [
+                      "id"=> $this->getProduto()->getCodigo()
+                    ],
+                    "quantidade"=> 200
+                  ]
+                ]
+            ],
+          ];  
+
+          // GET TOKEN
+          $token = token::getToken();
   
           $curl_handle = curl_init();
           curl_setopt($curl_handle, CURLOPT_URL, $endpoint);
           curl_setopt($curl_handle, CURLOPT_POST, 1);
-          curl_setopt($curl_handle, CURLOPT_POSTFIELDS, $posts);
+          curl_setopt($curl_handle, CURLOPT_POSTFIELDS, json_encode($prod));
           curl_setopt($curl_handle, CURLOPT_SSL_VERIFYPEER, false);
           curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, TRUE);
+          curl_setopt($curl_handle, CURLOPT_HTTPHEADER, ['Content-Type:application/json', 'Accept: application/json', "Authorization: Bearer $token"]);
           $response = curl_exec($curl_handle);
           $httpCode = curl_getinfo($curl_handle, CURLINFO_HTTP_CODE);
           curl_close($curl_handle);
-        
+          echo "<pre>";
+          print_r(json_decode($response));
           if($httpCode == "201"){
-            foreach (json_decode($response)->retorno->produtos as $key => $value) {
-                table_produtos_locais::where('sku',$this->getProduto()->getCodigo())->update(['id_bling' => $value->produto->id, 'INTEGRADO' => 'X','PREPARADO' => '']);
-            }
+                table_produtos_locais::where('sku',$this->getProduto()->getCodigo())->update(['id_bling' => json_decode($response)->data->id, 'INTEGRADO' => 'X','PREPARADO' => '']);
           }else{
               return "Error ao Atualizar o produto! Error -> ". $httpCode;
           }
@@ -64,6 +83,6 @@ class SobeCadastroController extends AbstractCadastroController
 
 
     public function resource(){
-        $this->get('Api/v2/produto/json');
+        $this->get('Api/v3/produtos');
     }
 }
