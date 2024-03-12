@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Bling\Cadastrar;
 
+use App\Http\Controllers\Bling\EstoqueController;
 use App\Http\Controllers\Controller;
 use App\Models\Produtos;
 use App\Models\table_produtos_locais;
@@ -71,7 +72,8 @@ class SobeCadastroController extends AbstractCadastroController
           print_r(json_decode($response));
           if($httpCode == "201"){
                 table_produtos_locais::where('sku',$this->getProduto()->getCodigo())->update(['id_bling' => json_decode($response)->data->id, 'INTEGRADO' => 'X','PREPARADO' => '']);
-          }else{
+                (new EstoqueController(json_decode($response)->data->id,1,$this->getProduto()->getEstoque()))->resource();
+            }else{
               return "Error ao Atualizar o produto! Error -> ". $httpCode;
           }
 

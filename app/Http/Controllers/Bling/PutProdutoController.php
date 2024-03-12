@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\multiloja;
 use App\Models\Produtos;
 use App\Models\table_produtos_locais;
+use App\Models\token;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -19,118 +20,164 @@ class PutProdutoController implements PutProdutoBling
 {
 
     const DIVISOR = 6000;
-    const URL_BASE_PUT_PRODUTO_BLING = "https://bling.com.br/";
+    const URL_BASE_PUT_PRODUTO_BLING = "https://www.bling.com.br/";
 
     private $sku;
     private $apikey;
     private $precoUnit;
     private $estoque;
+    private $nome;
+    private $codigo;
 
-    public function __construct($sku, $apikey, $precoUnit, $estoque)
+    public function __construct($sku, $apikey, $precoUnit, $estoque,$nome,$codigo)
     {
         $this->sku = $sku;
         $this->apikey = $apikey;
         $this->precoUnit = $precoUnit;
         $this->estoque = $estoque;
+        $this->nome = $nome;
+        $this->codigo = $codigo;
     }
 
     public function resource()
     {
-        return $this->get("Api/v2/produto/{$this->getSku()}/json/");
+        return $this->get("Api/v3/produtos/{$this->getSku()}");
     }
 
     public function get($resource)
     {
-
         // ENDPOINT PARA REQUISIÇÂO
         $endpoint = self::URL_BASE_PUT_PRODUTO_BLING . $resource;
+          // GET TOKEN
+          $token = token::getToken();
+    
+          $curl_handle = curl_init();
+          curl_setopt($curl_handle, CURLOPT_URL, $endpoint);
+          curl_setopt($curl_handle, CURLOPT_SSL_VERIFYHOST, 0);
+          curl_setopt($curl_handle, CURLOPT_SSL_VERIFYPEER, 0);
+          curl_setopt($curl_handle, CURLOPT_CUSTOMREQUEST, 'PUT');
+          curl_setopt($curl_handle, CURLOPT_POSTFIELDS, $this->toJson());
+          curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, TRUE);
+          curl_setopt($curl_handle, CURLOPT_HTTPHEADER, ['Content-Type:application/json', 'Accept: application/json', "Authorization: Bearer $token"]);
+          $response = curl_exec($curl_handle);
+          $httpCode = curl_getinfo($curl_handle, CURLINFO_HTTP_CODE);
+          curl_close($curl_handle);
 
-        // XML COM DADOS PARA ATUALIZAR 
-
-        $xml = "
-        <?xml version='1.0' encoding='UTF-8'?>
-        <produto>
-            <vlr_unit>{$this->getPrecoUnit()}</vlr_unit>
-            <estoque>{$this->getEstoque()}</estoque>
-        </produto>
-        ";
-
-        $posts = array(
-            "apikey" => $this->getApikey(),
-            "xml" => rawurlencode($xml),
-        );
-
-
-        $curl_handle = curl_init();
-        curl_setopt($curl_handle, CURLOPT_URL, $endpoint);
-        curl_setopt($curl_handle, CURLOPT_POST, 1);
-        curl_setopt($curl_handle, CURLOPT_POSTFIELDS, $posts);
-        curl_setopt($curl_handle, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, TRUE);
-        $response = curl_exec($curl_handle);
-        $httpCode = curl_getinfo($curl_handle, CURLINFO_HTTP_CODE);
-        curl_close($curl_handle);
-
-        Log::alert(json_encode($response));
-
-        if ($httpCode == "201") {
-            $this->updateMultiLoja($endpoint);
-            table_produtos_locais::where('sku', $this->getSku())->update(['flag' => '']);
+        if ($httpCode == "200") {
+            $EstoqueController = new EstoqueController($this->getSku(),$this->getEstoque());
+            $EstoqueController->resource();
+            $this->updateMultiLoja($endpoint,$token);
+            // table_produtos_locais::where('id_bling', $this->getSku())->update(['flag' => '']);
         } else {
             return "Error ao Atualizar o produto! Error -> " . $httpCode;
         }
     }
-    public function updateMultiLoja($endpoint)
+
+    public function toJson(){
+
+        $data = [
+            "preco"=> $this->getPrecoUnit(),
+            "tipo"=> "P",
+            "formato"=> "S",
+            "nome"=> $this->getNome(),
+            "unidade" => "UN",
+            "codigo" => $this->getCodigo()
+        ];
+
+        return json_encode($data);
+    }
+    
+    public function updateMultiLoja($endpoint,$token)
     {
-
-
+    
         $lojas = multiloja::get();
         // VERIFICA LOJA
-        $ifExist = table_produtos_locais::where('sku', $this->getSku())->first();
+        $produtoLocal = table_produtos_locais::where('id_bling', $this->getSku())->first();
 
         foreach ($lojas as $key => $value) {
 
+            if ($produtoLocal[$value->name]) {
+
             try {
-                $endpoint = "https://bling.com.br/Api/v2/produtoLoja/{$value->idmultiloja}/{$this->getSku()}/json";
+                
+                // IMPLEMENTAR O ID DO MULTILOJA GRAVADO.
+                $endpoint = "https://www.bling.com.br/Api/v3/produtos/lojas/{$this->getLocalLojaID($value->name,$lojas,$produtoLocal)}";
 
-        
-                if ($ifExist[$value->name]) {
-                    echo $value->name . "<hr>";
-                    // PRECO PROMO  <precoPromocional>20</precoPromocional>
-                    $xml = "<produtosLoja>
-                        <produtoLoja>
-                        <idLojaVirtual>{$ifExist[$value->name]}</idLojaVirtual>
-                        <preco>
-                            <preco>{$this->getLocal($value->name)}</preco>
-                        </preco>
-                        </produtoLoja>
-                        </produtosLoja>";
-
-                    echo "<p class='alert alert-success'>ID {$ifExist[$value->name]} loja {$value->name} foi atualizado com o valor  {$this->getLocal($value->name)}</p>";
-                    echo "<hr>";
-                    $posts = array(
-                        "apikey" => $this->getApikey(),
-                        "xml" => rawurlencode($xml),
-                    );
-
+                echo $endpoint;
+                echo "<hr>";
+                // IMPLEMENTAR O CODIGO PARA PUXAR OS DADOS DE ACORDO COM O MKTs
+                $prod = [
+                    "codigo" => $this->getLocalLoja($value->name,$lojas,$produtoLocal), 
+                    "produto" => [
+                          "id" => $produtoLocal['id_bling'] 
+                       ], 
+                    "loja" => [
+                             "id" => $value->idmultiloja 
+                          ], 
+                    "preco" => $this->getLocal($value->name) 
+                 ]; 
+                // echo "<pre>";
+                //  print_r($prod);
 
                     $curl_handle = curl_init();
                     curl_setopt($curl_handle, CURLOPT_URL, $endpoint);
-                    curl_setopt($curl_handle, CURLOPT_POST, 1);
-                    curl_setopt($curl_handle, CURLOPT_POSTFIELDS, $posts);
+                    curl_setopt($curl_handle, CURLOPT_CUSTOMREQUEST, 'PUT');
+                    curl_setopt($curl_handle, CURLOPT_POSTFIELDS, json_encode($prod));
                     curl_setopt($curl_handle, CURLOPT_SSL_VERIFYPEER, false);
                     curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, TRUE);
+                    curl_setopt($curl_handle, CURLOPT_HTTPHEADER, ['Content-Type:application/json', 'Accept: application/json', "Authorization: Bearer $token"]);
                     $response = curl_exec($curl_handle);
                     $httpCode = curl_getinfo($curl_handle, CURLINFO_HTTP_CODE);
                     curl_close($curl_handle);
                     $res = json_decode($response);
                     print_r($res);
-                }
+                
               
             } catch (\Exception $th) {
                 echo $th->getMessage();
             }
+         }
         }
+    }
+
+
+    public function getLocalLoja($id_loja,$lojas,$produtoLocal){
+
+        foreach ($lojas as $loja) {
+            if($loja->name == $id_loja){
+                switch ($loja->name) {
+                    case 'tray':
+                        return $produtoLocal['tray'];
+
+                    case 'id_shopee':
+                        return $produtoLocal['id_shopee'];
+                        
+                        case 'id_mercadolivre':
+                            return $produtoLocal['id_mercadolivre'];
+                }
+            }
+        }
+        
+    }
+
+
+    public function getLocalLojaID($id_loja,$lojas,$produtoLocal){
+
+        foreach ($lojas as $loja) {
+            if($loja->name == $id_loja){
+                switch ($loja->name) {
+                    case 'tray':
+                        return $produtoLocal['id_tray_loja'];
+
+                    case 'id_shopee':
+                        return $produtoLocal['id_shopee_loja'];
+                        
+                        case 'id_mercadolivre':
+                            return $produtoLocal['id_mercadolivre_loja'];
+                }
+            }
+        }
+        
     }
 
     public function getLocal($value)
@@ -323,5 +370,21 @@ class PutProdutoController implements PutProdutoBling
         $this->precoUnit = $precoUnit;
 
         return $this;
+    }
+
+    /**
+     * Get the value of nome
+     */
+    public function getNome()
+    {
+        return $this->nome;
+    }
+
+    /**
+     * Get the value of codigo
+     */
+    public function getCodigo()
+    {
+        return $this->codigo;
     }
 }

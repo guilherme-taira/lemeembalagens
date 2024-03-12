@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class ProdutoFactory extends abstractProdutoFactory
 {
-    public function VerificaPromocao($id, $Valor_promocao, $preco, $stock, \DateTimeInterface $DataInicialPromocao, \DateTimeInterface $DataFinalPromocao, $ativo, $qtdbaixa, $precosite)
+    public function VerificaPromocao($id, $Valor_promocao, $preco, $stock, \DateTimeInterface $DataInicialPromocao, \DateTimeInterface $DataFinalPromocao, $ativo, $qtdbaixa, $precosite,$nome,$codigo)
     {
 
         $hoje = new \DateTime();
@@ -18,12 +18,12 @@ class ProdutoFactory extends abstractProdutoFactory
 
             if ($DataFinalPromocao->format('Y-m-d') >= $hoje->format('Y-m-d') && $precosite == 0) {
                
-                $putProduto = new PutProdutoController($id,env('KEY_BLING'),$Valor_promocao,$stock);
+                $putProduto = new PutProdutoController($id,env('KEY_BLING'),$Valor_promocao,$stock,$nome,$codigo);
                 $putProduto->resource();
                 // $AtualizaPrecoEstoqueTray = new AtualizaPromocaoTray($_SESSION['access_token_tray'], $id, $this->VerificaPrecoDiferenteLojaFiscia($Valor_promocao, $precosite), $preco, $this->Dividesaldo($stock, $qtdbaixa), $DataInicialPromocao->format('Y-m-d'), $DataFinalPromocao->format('Y-m-d'), $ativo, $qtdbaixa);
                 // return $AtualizaPrecoEstoqueTray->resource();
             } else {
-                $putProduto = new PutProdutoController($id,env('KEY_BLING'),$preco,$stock);
+                $putProduto = new PutProdutoController($id,env('KEY_BLING'),$preco,$stock,$nome,$codigo);
                 $putProduto->resource();
                 // $AtualizaPrecoEstoqueTray = new AtualizaPromocaoTray($_SESSION['access_token_tray'], $id, 0, $this->VerificaPrecoDiferenteLojaFiscia($preco, $precosite), $this->Dividesaldo($stock, $qtdbaixa), $DataInicialPromocao->format('Y-m-d'), $DataFinalPromocao->format('Y-m-d'), $ativo, $qtdbaixa);
                 // return $AtualizaPrecoEstoqueTray->resource();

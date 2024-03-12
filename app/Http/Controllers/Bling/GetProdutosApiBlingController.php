@@ -44,61 +44,38 @@ class GetProdutosApiBlingController extends Controller
         // ENDPOINT PARA REQUISICAO
         $endpoint = URL_BASE_API_GET_PRODUTOS_BLING . $resource;
         $ch = curl_init();
-      
-        $lojas = multiloja::get();
-        foreach ($lojas as $loja) {
-  
-            $data = [
-                'idLoja' => $loja->idmultiloja,
-            ];
-    
+          
         $token = token::getToken();
         //curl_setopt($ch, CURLOPT_URL, $endpoint . '&apikey=' . $this->getApiKey() . '&estoque=S&loja=203664307');
         curl_setopt($ch, CURLOPT_URL, $endpoint);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json', 'Accept: application/json', "Authorization: Bearer $token"]);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));  
+        // curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));  
         $response = curl_exec($ch);
         curl_close($ch);
         $produtos = json_decode($response, false);
-        // echo "<pre>";
-        // print_r($produtos);
-        // foreach ($produtos as $produto) {
-        //     foreach ($produto as $valores) {
-        //         foreach ($valores as $valor) {
-        //              $id_Marketplace = isset($valor->produto->produtoLoja->idProdutoLoja) ? $valor->produto->produtoLoja->idProdutoLoja : "";
-        //              $data = Produtos::max('id');
-                   
-        //             $verifica = Produtos::where('sku', $valor->produto->codigo)->first();
-        //             if (!$verifica) {
-        //                 // print_r($valores);
-        //                 $salvar = new Produtos;
-        //                 $salvar->nome = $valor->produto->descricao;
-        //                 $salvar->sku = empty($valor->produto->codigo) ? $data : $valor->produto->codigo;
-        //                 $salvar->saldo = floatval($valor->produto->estoqueAtual);
-        //                 $salvar->QTDBAIXA = $valor->produto->itensPorCaixa;
-        //                 $salvar->valor = $this->converterValor(number_format($valor->produto->preco, 2));
-        //                 $salvar->ean = uniqid();
-        //                 $salvar->secundario = uniqid();
-        //                 $salvar->valorPromocional = 0;
-        //                 $salvar->dataInicial = '1111-11-11';
-        //                 $salvar->dataFinal = '1111-11-11';
-        //                 $salvar->flag = '';
-        //                 $salvar->desconto = 0;
-        //                 $salvar->ativo = $valor->produto->situacao;
-        //                 $salvar->save();
-        //             }else{
-        //                 $id = (string) $loja->name;
-        //                 if($id_Marketplace != $loja->idmultiloja){
-        //                     table_produtos_locais::where('sku',$valor->produto->codigo)->update([$id => $id_Marketplace,'peso' => $valor->produto->pesoLiq, 'altura' => $valor->produto->alturaProduto, 'largura' => $valor->produto->larguraProduto,'comprimento' => $valor->produto->profundidadeProduto]);
-        //                 }
-        //             }
-        //         }
-            // }
-        // }
+        foreach ($produtos->data as $produto) {
+            $this->getInfoDetail($token,$produto->id,$endpoint);
+        }
     }
-          # code...
+
+
+    public function getInfoDetail($token,$id,$endpoint){
+        // ENDPOINT PARA REQUISICAO
+        $endpoint .= '/'.$id;
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $endpoint);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json', 'Accept: application/json', "Authorization: Bearer $token"]);
+        $response = curl_exec($ch);
+        curl_close($ch);
+        $produtos = json_decode($response, false);
+        foreach ($produtos as $produto) {
+            table_produtos_locais::where('sku',$produto->codigo)->update(['peso' => $produto->pesoLiquido, 'altura' => $produto->dimensoes->altura, 'largura' => $produto->dimensoes->largura,'comprimento' => $produto->dimensoes->profundidade]);
+        } 
     }
 
     /**

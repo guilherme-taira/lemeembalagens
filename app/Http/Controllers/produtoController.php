@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 set_time_limit(0);
 
 use App\Http\Controllers\Bling\Cadastrar\SobeCadastroController;
+use App\Http\Controllers\Bling\EstoqueController;
 use App\Http\Controllers\Bling\GetProdutosApiBlingController;
 use App\Http\Controllers\Bling\Hub\ProdutoFactory;
 use App\Http\Controllers\Bling\JobGetProductController;
@@ -171,9 +172,7 @@ class produtoController extends Controller
      
         echo "<h1> teste </h1>";
         
-        $token = token::first();
-        $refreshToken = new TokenControllerImplement($_ENV['CLIENT_ID'],$_ENV['CLIENT_SECRET'],$token->refresh_token,$token);
-        $refreshToken->resource();
+    
 
         // $produtos = Produtos::where('PREPARADO',"X")->get();
         // foreach ($produtos as $value) {

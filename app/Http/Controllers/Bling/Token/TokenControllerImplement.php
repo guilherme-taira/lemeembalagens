@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Bling\Token;
 
 use App\Http\Controllers\Controller;
 use App\Models\token;
+use DateTime;
 use Illuminate\Http\Request;
+date_default_timezone_set('America/Sao_Paulo');
 
 class TokenControllerImplement extends abstractToken
 {
@@ -18,8 +20,11 @@ class TokenControllerImplement extends abstractToken
 
     public function get($resource){
 
-        if($this->getTokens()->date_modify <  date('Y/m/d H:i:s')){
-            
+        $data1Obj = new DateTime($this->getTokens()['datamodify']);
+        $data2Obj = new DateTime(date('Y-m-d H:i:s'));
+
+        if($data1Obj < $data2Obj){
+
         // ENDPOINT PARA REQUISICAO
         $endpoint = parent::URL_BASE. $resource;
 
@@ -45,7 +50,6 @@ class TokenControllerImplement extends abstractToken
         curl_close($ch);
         // Execução da requisição
         $res = json_decode($response,true);
-
             if ($httpCode == 200) {
                 token::saveTokenArray($res);
             } else {
