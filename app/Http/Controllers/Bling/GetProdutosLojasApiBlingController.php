@@ -52,7 +52,7 @@ class GetProdutosLojasApiBlingController extends Controller
             foreach ($produto as $valores) {
               if(isset($valores->codigo) && $valores->codigo != 0){
                     if($valores->loja->id == $loja->idmultiloja){
-                        table_produtos_locais::where('id_bling',$valores->produto->id)->update([$loja->name => $valores->codigo, $this->getLocalLoja($valores->loja->id,$lojas) => $valores->id]);
+                        table_produtos_locais::where('id_bling',$valores->produto->id)->update([$loja->name => $valores->codigo, $this->getLocalLoja($valores->loja->id,$lojas) => $valores->id,'INTEGRADO' => 'X','PREPARADO' => '']);
                     }
               }
             }
